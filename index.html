@@ -48,7 +48,7 @@ input[type=checkbox]{display:inline-block;width:auto}
 </style>
 </head>
 <body>
-<header><div class="logo" onclick="go('home')">🎂 Niche Birthdays</div>
+<header><div class="logo" onclick="go('home')"> Niche Birthdays</div>
 <nav><button class="btn alt" onclick="go('home')">Home</button><button class="btn alt" onclick="go('browse')">Browse</button><button class="btn alt" onclick="go('submit')">Submit</button><button class="btn alt" onclick="go('queue')">Review queue</button><button class="btn alt" onclick="go('rules')">Rules</button></nav></header>
 <main><section id="home"></section><section id="browse" hidden></section><section id="profile" hidden></section><section id="submit" hidden></section><section id="queue" hidden></section><section id="rules" hidden></section></main>
 <div id="toast" role="status"></div>
@@ -60,16 +60,16 @@ const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","De
 const CATS=["Cozy Gaming","Pixel Art","Lo-fi Music","Baking","Study Vlogs","BookTok","Speedrunning","Animation"];
 const MILES=[1e3,5e3,1e4,25e3,5e4,1e5,25e4,5e5,1e6];
 const REASONS=["Hate speech or harassment","Scam or fraud","Impersonation","Personal info (PII)","Wrong information","Other"];
-const BLACK=["examplebadactor"]; // DEMO ONLY: a real blacklist must live on your server so it stays private
+const BLACK=["examplebadactor"]; // DEMO ONLY: a real blacklist must live on this server so it stays private
 const PII=/(\+?\d[\d\s().-]{8,}\d)|([\w.+-]+@[\w-]+\.[\w.]+)|(\b\d{1,5}\s+[a-z]+\s+(street|st|ave|avenue|road|rd|lane|ln|blvd|drive|dr)\b)|(\b(high|middle|elementary)\s+school\b)/i;
-// Birthdays are stored as "MM-DD" plus a time zone, so "today" flips at the creator's local midnight
+// Birthdays are stored as "MM-DD" plus a time zone, so today flips at the creator's local midnight
 const todayIn=tz=>{const p={};new Intl.DateTimeFormat("en-US",{timeZone:tz,month:"2-digit",day:"2-digit"}).formatToParts(new Date()).forEach(x=>p[x.type]=x.value);return p.month+"-"+p.day};
 const T=todayIn("America/New_York");
 const mk=(id,name,pro,cat,bd,tz,subs,bio,collab,more)=>({id,name,pro,cat,bd,tz,subs,bio,collab,more,links:["https://youtube.com/@niche-demo-"+id,"https://tiktok.com/@niche-demo-"+id],log:["Profile approved"]});
 const seed=[
-mk(1,"Mochi Maple","she/her","Cozy Gaming",T,"America/New_York",42000,"Cozy farm-sim streams and tiny-town tours.","DM on Twitch",["Discord","Newsletter"]),
-mk(2,"Pixel Pablo","he/him","Pixel Art","03-14","Europe/Madrid",8700,"Portraits and speedpaint timelapses in 16 colors.","",["Patreon"]),
-mk(3,"Luna Lofi","they/them","Lo-fi Music","07-02","America/Chicago",120000,"Rainy-day beats for studying and sleepy mornings.","Email in bio",["Podcast","Discord"]),
+mk(1,"imademon123","she/her","Cozy Gaming",T,"America/New_York",42000,"Cozy farm-sim streams and tiny-town tours.","DM on Twitch",["Discord","Newsletter"]),
+mk(2,"67Pablo","he/him","Pixel Art","03-14","Europe/Madrid",8700,"Portraits and speedpaint timelapses in 16 colors.","",["Patreon"]),
+mk(3,"yepyepthisiscoderot","they/them","Rock Music","07-02","America/Chicago",120000,"very calming heavy metal music for studying and sleepy mornings.","Email in bio",["Podcast","Discord"]),
 mk(4,"Crumb & Co.","she/her","Baking","11-09","Europe/London",15300,"Weeknight bakes, no-fail sourdough, honest flops.","",["Newsletter"]),
 mk(5,"Priya Reads","she/her","BookTok","01-27","Asia/Kolkata",64000,"Cozy fantasy reviews and five-minute book hauls.","",["Substack"]),
 mk(6,"Frame Skipper","he/him","Speedrunning","09-18","America/Los_Angeles",3200,"Retro platformer any% runs and route breakdowns.","Discord",["Discord"])];
