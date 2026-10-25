@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Niche Birthdays</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;800&display=swap">
+<style>
+:root{--bg:#ece6ff;--card:#fff;--ink:#2a1747;--mute:#5f5380;--pink:#ff6fa5;--yel:#ffd84a;--mint:#46d9b4;--link:#a3104f}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1030;--card:#291a48;--ink:#f6edff;--mute:#bfb2dc;--link:#ff9fc5}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.55 "Baloo 2",system-ui,sans-serif}
+h1,h2,h3,.logo{font-weight:800;line-height:1.05;margin:0 0 .4em}
+h1{font-size:clamp(2rem,6vw,3.4rem)}
+h2{font-size:1.7rem}
+h3{font-size:1.15rem;margin:0}
+p{max-width:62ch}
+a{color:var(--link);font-weight:800}
+small{color:var(--mute)}
+header{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.8rem 1rem;border-bottom:3px solid var(--ink)}
+.logo{font-size:1.6rem;margin:0;cursor:pointer}
+nav{display:flex;flex-wrap:wrap;gap:.4rem}
+main{max-width:960px;margin:0 auto;padding:1rem}
+.btn{background:var(--yel);color:#2a1747;border:2px solid var(--ink);border-radius:999px;padding:.3rem .9rem;font:inherit;font-weight:800;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
+.btn.alt{background:var(--card);color:var(--ink)}
+.btn.pink{background:var(--pink)}
+.btn:active{transform:translate(2px,2px);box-shadow:none}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:16px;padding:1rem;box-shadow:4px 4px 0 var(--ink)}
+.today{background:var(--pink);color:#2a1747;border:3px solid var(--ink);border-radius:24px;box-shadow:8px 8px 0 var(--ink);padding:1.2rem;margin:1.5rem 0}
+.today h2{font-size:2.2rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem}
+.row{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap}
+.row>label{flex:1}
+label{display:block;margin:.6rem 0;font-weight:800}
+input,select,textarea{display:block;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--ink);border-radius:10px;padding:.4rem .6rem}
+input[type=checkbox]{display:inline-block;width:auto}
+.chip{font:inherit;font-weight:700;background:var(--card);color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:.1rem .8rem;margin:0 .3rem .4rem 0;cursor:pointer}
+.chip.on{background:var(--mint);color:#2a1747}
+.pc{display:flex;gap:.7rem;align-items:center;cursor:pointer}
+.av{flex:none;width:52px;height:52px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-weight:800;font-size:1.1rem;color:#2a1747}
+.tag{display:inline-block;border:2px solid var(--ink);border-radius:999px;padding:0 .6rem;margin:.2rem .3rem 0 0;font-size:.85rem;background:var(--bg);color:var(--ink);text-decoration:none}
+.tag.m{background:var(--mint);color:#2a1747}
+.bar{height:12px;border:2px solid var(--ink);border-radius:9px;overflow:hidden;background:var(--bg);max-width:420px}
+.bar i{display:block;height:100%;background:var(--pink)}
+.err{color:var(--link);font-weight:800}
+#toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.5rem 1rem;border-radius:999px;display:none;max-width:90%;text-align:center}
+:focus-visible{outline:3px solid var(--link);outline-offset:2px}
+</style>
+</head>
+<body>
+<header><div class="logo" onclick="go('home')">🎂 Niche Birthdays</div>
+<nav><button class="btn alt" onclick="go('home')">Home</button><button class="btn alt" onclick="go('browse')">Browse</button><button class="btn alt" onclick="go('submit')">Submit</button><button class="btn alt" onclick="go('queue')">Review queue</button><button class="btn alt" onclick="go('rules')">Rules</button></nav></header>
+<main><section id="home"></section><section id="browse" hidden></section><section id="profile" hidden></section><section id="submit" hidden></section><section id="queue" hidden></section><section id="rules" hidden></section></main>
+<div id="toast" role="status"></div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const KV={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const CATS=["Cozy Gaming","Pixel Art","Lo-fi Music","Baking","Study Vlogs","BookTok","Speedrunning","Animation"];
+const MILES=[1e3,5e3,1e4,25e3,5e4,1e5,25e4,5e5,1e6];
+const REASONS=["Hate speech or harassment","Scam or fraud","Impersonation","Personal info (PII)","Wrong information","Other"];
+const BLACK=["examplebadactor"]; // DEMO ONLY: a real blacklist must live on your server so it stays private
+const PII=/(\+?\d[\d\s().-]{8,}\d)|([\w.+-]+@[\w-]+\.[\w.]+)|(\b\d{1,5}\s+[a-z]+\s+(street|st|ave|avenue|road|rd|lane|ln|blvd|drive|dr)\b)|(\b(high|middle|elementary)\s+school\b)/i;
+// Birthdays are stored as "MM-DD" plus a time zone, so "today" flips at the creator's local midnight
+const todayIn=tz=>{const p={};new Intl.DateTimeFormat("en-US",{timeZone:tz,month:"2-digit",day:"2-digit"}).formatToParts(new Date()).forEach(x=>p[x.type]=x.value);return p.month+"-"+p.day};
+const T=todayIn("America/New_York");
+const mk=(id,name,pro,cat,bd,tz,subs,bio,collab,more)=>({id,name,pro,cat,bd,tz,subs,bio,collab,more,links:["https://youtube.com/@niche-demo-"+id,"https://tiktok.com/@niche-demo-"+id],log:["Profile approved"]});
+const seed=[
+mk(1,"Mochi Maple","she/her","Cozy Gaming",T,"America/New_York",42000,"Cozy farm-sim streams and tiny-town tours.","DM on Twitch",["Discord","Newsletter"]),
+mk(2,"Pixel Pablo","he/him","Pixel Art","03-14","Europe/Madrid",8700,"Portraits and speedpaint timelapses in 16 colors.","",["Patreon"]),
+mk(3,"Luna Lofi","they/them","Lo-fi Music","07-02","America/Chicago",120000,"Rainy-day beats for studying and sleepy mornings.","Email in bio",["Podcast","Discord"]),
+mk(4,"Crumb & Co.","she/her","Baking","11-09","Europe/London",15300,"Weeknight bakes, no-fail sourdough, honest flops.","",["Newsletter"]),
+mk(5,"Priya Reads","she/her","BookTok","01-27","Asia/Kolkata",64000,"Cozy fantasy reviews and five-minute book hauls.","",["Substack"]),
+mk(6,"Frame Skipper","he/him","Speedrunning","09-18","America/Los_Angeles",3200,"Retro platformer any% runs and route breakdowns.","Discord",["Discord"])];
+let C=KV.get("nb_c",seed),Q=KV.get("nb_q",[]),cat="",qs="",cur=0,mod=false,tt;
+C.forEach(c=>{if(c.id===1)c.bd=T});
+const save=()=>{KV.set("nb_c",C);KV.set("nb_q",Q)};
+const fmt=b=>MON[+b.slice(0,2)-1]+" "+(+b.slice(3));
+const av=c=>`<div class="av" style="background:hsl(${c.id*57%360} 85% 78%)">${esc(c.name.split(" ").map(w=>w[0]).join("").slice(0,2))}</div>`;
+const tags=c=>`<span class="tag">${esc(c.cat)}</span><span class="tag m">🎂 ${fmt(c.bd)}</span>`;
+const who=c=>`${av(c)}<div><h3>${esc(c.name)}</h3>${tags(c)}</div>`;
+const card=c=>`<div class="card pc" tabindex="0" onclick="go('profile',${c.id})" onkeydown="if(event.key==='Enter')go('profile',${c.id})">${who(c)}</div>`;
+const toast=m=>{const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",3200)};
+const VIEWS={home:rHome,browse:rBrowse,profile:rProfile,submit:rSubmit,queue:rQueue,rules:rRules};
+function go(v,id){Object.keys(VIEWS).forEach(s=>$(s).hidden=s!==v);VIEWS[v](id);scrollTo(0,0)}
+
+function rHome(){const t=C.filter(c=>todayIn(c.tz)===c.bd);
+$("home").innerHTML=`<div style="padding:1.2rem 0"><h1>Birthdays for creators the algorithm hasn’t found yet</h1><p>A home for creators under 1M followers. Every profile links two real accounts, waits in review before it goes live, and can be removed by the creator at any time.</p><button class="btn pink" onclick="go('submit')">Submit a creator or yourself</button></div>
+<div class="today"><h2>🎉 Today’s birthdays</h2><div class="grid">${t.length?t.map(c=>`<div class="card"><div class="pc" onclick="go('profile',${c.id})">${who(c)}</div><p><a href="${esc(c.links[0])}" target="_blank" rel="noopener">🎈 Leave a birthday wish</a></p></div>`).join(""):"<p>Nobody celebrates today. Check back tomorrow.</p>"}</div></div>
+<h2>Find your niche</h2>${CATS.map(k=>`<button class="chip" onclick="cat='${k}';go('browse')">${k}</button>`).join("")}`}
+
+function rBrowse(){$("browse").innerHTML=`<h1>Browse creators</h1><input id="q" placeholder="Search names or niches…" aria-label="Search" value="${esc(qs)}"><div style="margin:.8rem 0"><button class="chip ${cat?"":"on"}" onclick="cat='';rBrowse()">All</button>${CATS.map(k=>`<button class="chip ${cat===k?"on":""}" onclick="cat='${k}';rBrowse()">${k}</button>`).join("")}</div><div class="grid" id="list"></div>`;
+const draw=()=>{const s=qs.toLowerCase(),r=C.filter(c=>(!cat||c.cat===cat)&&(c.name+" "+c.cat).toLowerCase().includes(s));$("list").innerHTML=r.length?r.map(card).join(""):"<p>Nobody here yet. Be the first to submit a creator.</p>"};
+$("q").oninput=e=>{qs=e.target.value;draw()};draw()}
+
+function rProfile(id){const c=C.find(x=>x.id===id);if(!c)return go("browse");cur=c.id;
+const n=MILES.find(m=>m>c.subs)||1e6,p=Math.min(100,Math.round(c.subs/n*100)),k=x=>x>=1e6?"1M":x>=1e3?x/1e3+"k":x;
+$("profile").innerHTML=`<button class="btn alt" onclick="go('browse')">Back to browse</button>
+<div class="card" style="margin-top:.8rem"><div class="row">${av(c)}<div><h1 style="margin:0;font-size:2.2rem">${esc(c.name)}</h1><span class="tag">${esc(c.pro)}</span>${tags(c)}</div></div>
+<p>${esc(c.bio)}</p>${c.collab?`<p><span class="tag m">🤝 Looking to collab</span> ${esc(c.collab)}</p>`:""}
+<h3>Find them</h3><div>${c.links.map(l=>`<a class="tag" href="${esc(l)}" target="_blank" rel="noopener">${esc(l.replace(/^https?:\/\/(www\.)?/,"").split(/[\/?]/)[0])}</a>`).join("")}${c.more.map(m=>`<span class="tag">${esc(m)}</span>`).join("")}</div>
+${c.subs?`<h3 style="margin-top:1rem">Next milestone: ${k(c.subs)} of ${k(n)}</h3><div class="bar"><i style="width:${p}%"></i></div>`:""}
+<p style="margin-top:1rem"><button class="btn alt" onclick="toast('Claiming a page needs logins, so it comes with the backend step.')">Claim this page</button> <button class="btn alt" onclick="go('rules')">Remove my profile</button></p></div>
+<div class="grid" style="margin-top:1rem"><form class="card" onsubmit="return sug(event)"><h3>✏️ Suggest an edit</h3><label>What needs fixing?<select name="f"><option>Birthday</option><option>Bio</option><option>Links</option><option>Other</option></select></label><label>Your correction<textarea name="t" required maxlength="300"></textarea></label><button class="btn">Send to review queue</button></form>
+<form class="card" onsubmit="return rep(event)"><h3>🚩 Report this profile</h3><label>Reason<select name="r">${REASONS.map(r=>`<option>${r}</option>`).join("")}</select></label><button class="btn pink">Send report</button></form></div>
+<div class="card" style="margin-top:1rem"><h3>Edit history</h3><ul>${c.log.map(l=>`<li>${esc(l)}</li>`).join("")}</ul></div>`}
+
+function pushQ(type,txt){const c=C.find(x=>x.id===cur)||{};Q.unshift({id:Date.now(),type,txt,cid:cur,who:c.name,st:"pending",d:new Date().toLocaleDateString()});save()}
+function sug(e){e.preventDefault();const f=e.target.elements,v=f.t.value.trim();if(PII.test(v)){toast("Leave out personal info like phone numbers, emails or addresses.");return false}pushQ("Edit suggestion",f.f.value+": "+v);toast("Sent. It’s now in the public review queue.");e.target.reset();return false}
+function rep(e){e.preventDefault();pushQ("Report",e.target.elements.r.value);toast("Report sent to the moderators.");return false}
+
+function rSubmit(){const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC",zs=Intl.supportedValuesOf?Intl.supportedValuesOf("timeZone"):[tz];
+$("submit").innerHTML=`<h1>Submit a creator</h1><p>Nothing goes live instantly. New profiles wait in the review queue first. We only keep the month and day, never a birth year.</p>
+<form class="card" id="sf"><label>Creator name<input name="n" required maxlength="60"></label><label>Pronouns (optional)<input name="p" maxlength="30"></label>
+<label>Niche<select name="c">${CATS.map(k=>`<option>${k}</option>`).join("")}</select></label>
+<div class="row"><label>Birth month<select name="m">${MON.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("")}</select></label><label>Day<input name="d" type="number" min="1" max="31" required></label></div>
+<label>Birthday time zone<select name="z">${zs.map(z=>`<option${z===tz?" selected":""}>${z}</option>`).join("")}</select></label>
+<label>Short bio<textarea name="b" required maxlength="240"></textarea></label>
+<p><b>Public profile links.</b> Add at least two from TikTok, YouTube, Instagram or Twitch.</p>
+<input name="l1" placeholder="https://youtube.com/@…"><input name="l2" placeholder="https://tiktok.com/@…" style="margin-top:.4rem"><input name="l3" placeholder="Optional third link" style="margin-top:.4rem">
+<label><input type="checkbox" name="s" required> I’m this creator, or I’m submitting for them, and I agree to the Rules.</label>
+<p class="err" id="err"></p><button class="btn pink">Send to review queue</button></form>`;
+$("sf").onsubmit=e=>{e.preventDefault();
+const f=e.target.elements,er=[],name=f.n.value.trim(),day=new Date().toDateString(),rl=KV.get("nb_rl",{d:"",n:0}),m=+f.m.value,d=+f.d.value;
+const ls=[f.l1.value,f.l2.value,f.l3.value].map(x=>x.trim()).filter(x=>/^https?:\/\/(www\.)?(tiktok\.com|youtube\.com|instagram\.com|twitch\.tv)\/\S+/i.test(x));
+if(new Set(ls).size<2)er.push("Add at least two different public profile links.");
+if(d<1||d>[31,29,31,30,31,30,31,31,30,31,30,31][m-1])er.push("That day doesn’t exist in that month.");
+if(PII.test(f.b.value))er.push("The bio can’t include phone numbers, emails, addresses or school names.");
+if(BLACK.some(b=>(name+ls.join("")).toLowerCase().replace(/[^a-z0-9]/g,"").includes(b)))er.push("Blacklisted Creator");
+if(rl.d===day&&rl.n>=3)er.push("Daily submission limit reached. Try again tomorrow."); // DEMO: real limits go by IP and email domain on the server
+$("err").innerHTML=er.map(esc).join("<br>");if(er.length)return;
+KV.set("nb_rl",{d:day,n:rl.d===day?rl.n+1:1});
+const pad=x=>String(x).padStart(2,"0"),id=Date.now();
+Q.unshift({id:id+1,type:"New profile",txt:name+" ("+f.c.value+")",who:name,st:"pending",d:new Date().toLocaleDateString(),prof:{id,name,pro:f.p.value.trim()||"not shared",cat:f.c.value,bd:pad(m)+"-"+pad(d),tz:f.z.value,subs:0,bio:f.b.value.trim(),collab:"",links:ls,more:[],log:["Submitted and approved by a moderator"]}});
+save();toast("Thanks. Your submission is in the review queue.");go("queue");
+}}
+
+function rQueue(){$("queue").innerHTML=`<h1>Public review queue</h1><p>Every new profile and suggested edit waits here before it goes live, and anyone can watch.</p>
+<label><input type="checkbox" ${mod?"checked":""} onchange="mod=this.checked;rQueue()"> Moderator mode (demo only; the real site needs moderator logins)</label>
+${Q.length?Q.map(q=>`<div class="card" style="margin:.8rem 0"><h3>${esc(q.type)} for ${esc(q.who||"a profile")}</h3><span class="tag ${q.st==="approved"?"m":""}">${esc(q.st)}</span><small>${esc(q.d)}</small><p>${esc(q.txt)}</p>${mod&&q.st==="pending"?`<button class="btn" onclick="rev(${q.id},1)">Approve</button> <button class="btn alt" onclick="rev(${q.id},0)">Reject</button>`:""}</div>`).join(""):"<p>The queue is empty. New submissions and edit suggestions show up here.</p>"}`}
+function rev(id,ok){const q=Q.find(x=>x.id===id);q.st=ok?"approved":"rejected";if(ok&&q.prof)C.push(q.prof);else if(ok){const c=C.find(x=>x.id===q.cid);if(c)c.log.unshift(q.type+" approved: "+q.txt+" ("+q.d+")")}save();rQueue()}
+
+function rRules(){$("rules").innerHTML=`<h1>Community rules</h1><div class="card"><p>These get a profile rejected or removed:</p><ul><li><b>Hate speech and harassment:</b> slurs, targeted attacks, bullying or calls for violence.</li><li><b>Scams and fraud:</b> malicious links, crypto or money scams, impersonation.</li><li><b>Personal info:</b> no home addresses, phone numbers, private emails or school names, especially for minors.</li><li><b>Legal violations:</b> copyright, privacy or local-law breaches.</li></ul><p>Creators who pass 1M followers may be archived. Some names are blocked to keep the community safe.</p></div>
+<h2 style="margin-top:1.4rem">Remove my profile</h2>
+<form class="card" id="of"><p>Creators, parents and guardians can ask for removal. No reason needed.</p><label>Profile name<input name="n" required></label><button class="btn pink">Remove this profile</button></form>
+<div class="card" style="margin-top:1rem"><h3>Terms of Service</h3><p>Paste your full Terms of Service here.</p></div>`;
+$("of").onsubmit=e=>{e.preventDefault();const n=e.target.elements.n.value.trim().toLowerCase(),b=C.length;
+C=C.filter(c=>c.name.toLowerCase()!==n); // DEMO: a real version should verify who is asking
+save();toast(C.length<b?"Profile removed.":"No profile with that name.");e.target.reset()}}
+
+go("home");
+</script>
+</body>
+</html>
